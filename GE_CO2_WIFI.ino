@@ -1,3 +1,8 @@
+/* 
+Have plans to better comment all the code below
+[4/11/2017]
+*/
+
 #include <Wire.h>
 #include <ESP8266WiFi.h>         //enable ESP8266 Wifi Library
 #include <PubSubClient.h>        //enable MQTT Library
@@ -5,9 +10,9 @@
 /////////////////////////////////////////////
 /////// Wifi Variables //////////////////////
 /////////////////////////////////////////////
-const char* ssid = "greauxeng";        //Internet Network Name
-const char* password = "thankful4242";    //Wifi Password
-const char* mqtt_server = "192.168.0.1";    //MQTT Server IP Address
+const char* ssid = "YOUR SSID";        //Internet Network Name
+const char* password = "YOUR PASSWORD";    //Wifi Password
+const char* mqtt_server = "MQTT BROKER IP ADDRESS";    //MQTT Server IP Address
 WiFiClient espClient;           //Create Wifi client named espClient
 char c[8];
 /////////////////////////////////////////////
@@ -49,7 +54,7 @@ void setup_wifi() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
-  WiFi.persistent(false); //These 3 lines are a required work around
+  WiFi.persistent(false); //These 3 lines are a required work-around,
   WiFi.mode(WIFI_OFF);    //otherwise the module will not reconnect
   WiFi.mode(WIFI_STA);    //if it gets disconnected
   WiFi.begin(ssid, password);
