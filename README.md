@@ -1,5 +1,5 @@
 # automated-hydroponics
-An effort towards an automated hydroponic system.  CO2, pH, EC, Water level, Nutrient Dosing, etc...
+An effort towards an automated hydroponic system.
 
 This system was created for a senior project in mechanical engineering.  Three seperate Wemos (ESP8266) communicate via MQTT to a Mosquitto broker running on a Raspberry Pi.  Node-Red was used on the Pi to create a quick/effecient user interface.
 
