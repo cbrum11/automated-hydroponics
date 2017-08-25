@@ -2,9 +2,28 @@
 // Finalized EC and PH code for the Greaux
 // Engineering Sysstem.  Includes wireless
 // connectivity and MQTT data transfer
-//
+////////////////////////////////////////////
+// DO NOT FORGET TO CHANGE MQTT IP, NETWORK SSID
+// NAME, AND NETWORK PASSWORD VARIABLES TO 
+// MATCH YOUR NETWORK
+///////////////////////////////////////////
+///////////////////////////////////////////
+// 1. Coneccts to Wifi and MQTT
+// 2. Measures EC and checks accuracy
+// 3. Measures PH 
+// 4. If EC is found accurate doses based on range
+//    HIGH --> Do nothing (system will acclimate)
+//    LOW  --> Add nutrients
+//    IN RANGE --> Move to test PH accuracy
+// 5. Reads PH and checks accuracy
+// 6. If PH is found accuracte doses based on range
+//    HIGH --> Doses PH down
+//    LOW  --> Doses PH up
+//    IN RANGE --> Move back to EC reading
+// 7. Reports all readings and status via MQTT for viewing
+///////////////////////////////////////////////////////
 // Written by: Chase Brumfield
-/////////////////////////////////////////////
+///////////////////////////////////////////////////////
 
 ///////////////////////
 #include <PubSubClient.h>        //enable MQTT Library
@@ -38,19 +57,19 @@ byte i = 0;                      //counter used for ph_data array.
 int time_ = 1800;                //used to change the delay needed depending on the command sent to the EZO Class pH Circuit.
 int delay_time = 2000;           //used to change the delay needed depending on the command sent to the EZO Class EC Circuit.
 
-int PHup = D6;
-int PHdown = D7;
-int Nutrients = D8;
+int PHup = D6;        //Wemos pin attached to PH up dosing motor
+int PHdown = D7;      //Wemos pin attached to PH down dosing motor
+int Nutrients = D8;   //Wemos pin attached to nutrients dosing motor
 
-float max_diffPH = 0.10; //maximum difference between PH readings for readings to be considered accurate
-float max_diffEC = 10.0;//maximum difference between PH readings for readings to be considered accurate
-float PHmax = 6.5;    //Desired PH Range [Log Scale]
-float PHmin = 5.5;
-float ECmax = 1300.0; //Desired EC Range [uS/cm]
-float ECmin = 1200.0;
-float ph_float;       //float var used to hold the float value of pH
-int PHup_delay = 15000; //amount of time to pump PH up solution when reading is LOW
-int PHdown_delay = 7500; //amount of time to pump PH down solution when reading is HIGH
+float max_diffPH = 0.10;     //maximum difference between PH readings for readings to be considered accurate
+float max_diffEC = 10.0;     //maximum difference between PH readings for readings to be considered accurate
+float PHmax = 6.5;           //Desired PH Range high value [Log Scale]
+float PHmin = 5.5;           //Desired PH Range low value [Log Scale]
+float ECmax = 1300.0;        //Desired EC Range high value [uS/cm]
+float ECmin = 1200.0;        //Desired EC Range low value [uS/cm]
+float ph_float;              //float var used to hold the float value of pH
+int PHup_delay = 15000;      //amount of time to pump PH up solution when reading is LOW
+int PHdown_delay = 7500;     //amount of time to pump PH down solution when reading is HIGH
 int Nutrients_delay = 15000; //amount of time to release nutrients when reading is LOW
 
 char *ec;          //char pointer used in string parsing.
@@ -71,7 +90,7 @@ float EC_1;   //Storing EC Readings
 float EC_2;
 float EC_3;
 
-float diff1;  //For sequential reading comparison
+float diff1;  //For accuracy checking of sequential EC and PH readings
 float diff2;
 float diff3;
 
@@ -79,7 +98,7 @@ float diff3;
 // MQTT SETUP //////////////////
 ////////////////////////////////
 
-const char* mqtt_server = "192.168.0.1";    //MQTT Server IP Address
+const char* mqtt_server = "YOUR MQTT IP ADDRESS HERE";    //MQTT Server IP Address
 WiFiClient espClient2;           //Create Wifi client named espClient
 PubSubClient client(espClient2);
 
@@ -87,8 +106,8 @@ PubSubClient client(espClient2);
 /////// Wifi Variables //////////////////////
 /////////////////////////////////////////////
 
-const char* ssid = "greauxeng";        //Internet Network Name
-const char* password = "thankful4242";    //Wifi Password
+const char* ssid = "YOUR NETWORK ID NAME";        //Internet Network Name
+const char* password = "YOUR NETWORK PASSWORD";    //Wifi Password
 char c[8];
 long lastMsg = 0;
 int value = 0;
@@ -145,12 +164,14 @@ void setup_wifi() {
 // PH ACCURACY AND ACTION FUNCTION ////////////
 ///////////////////////////////////////////////
 
+//////////////////////////////////////////////
 // Takes 3 readings and compares the difference
 // between them to make sure this difference is below
 // a set value.  If the difference is below this value,
 // the reading is considered accurate.
 // This part of the code also handles PH dosing if the measured
 // value is within certain ranges.
+//////////////////////////////////////////////
 
 int PHloop() {  
  
@@ -196,8 +217,8 @@ int PHloop() {
       ///////////////////////////////////////////////////////
       //Once we have an accurate reading, if the
       //PH level is outside our acceptable range
-      //we powe the perisaltic pump for a specified amount of time
-      //to dose the appropriate amount of PH
+      //we power the perisaltic pump for a specified amount of time
+      //to dose the appropriate amount of PH solution
       /////////////////////////////////////////////////////
 
       if (PH_3 <= PHmin) {
@@ -360,10 +381,10 @@ void setup()
   Serial.begin(9600);                   //enable serial port.
   Wire.begin();                         //enable I2C port.
   delay(3000);
-  pinMode(PHup, OUTPUT);
-  digitalWrite(PHup, LOW);
-  pinMode(PHdown, OUTPUT);
-  digitalWrite(PHdown, LOW);
+  pinMode(PHup, OUTPUT);                //Initialize all pins as outputs
+  digitalWrite(PHup, LOW);              //and low so there aren't any
+  pinMode(PHdown, OUTPUT);              //accidental dosings when power is
+  digitalWrite(PHdown, LOW);            //first applies
   pinMode(Nutrients, OUTPUT);
   digitalWrite(Nutrients, LOW);
   setup_wifi();                         //run wifi setup function
@@ -381,8 +402,8 @@ void loop() {
   delay(1000);
   
   // Although system reports a PH reading after every 3 EC readings,
-  // Code does NOT move to validate the PH reading for accuracy, or
-  // dose PH solution until the EC reading has reached the appropriate level.
+  // Code does NOT move to validate the PH reading for accuracy (or
+  // dose PH solution) until the EC reading has reached the appropriate level.
   
   do
   {
@@ -438,9 +459,10 @@ void loop() {
     client.publish("sensor/ec/status","LOW");
     client.publish("sensor/ec/value", msg);
 
-/////////////////////////////
-//MIGHT NEED TO GET RID OF THIS BLOCK
-//////////////////////////////
+////////////////////////////////////////////////////////////////
+//The below code block counts the number of doses since power up
+//and sends them via MQTT for display
+////////////////////////////////////////////////////////////////
 
     char counter_nutrients[4];
     release_nutrients_counter = release_nutrients_counter+1;
@@ -449,7 +471,8 @@ void loop() {
     Serial.println("Nutrients Release Count:");
     Serial.println(counter_nutrients);
     client.publish("sensor/nutrients/counter",counter_nutrients); 
-
+////////////////////////////////////////////////////////////////////
+    
     digitalWrite(Nutrients, HIGH);
     delay(Nutrients_delay);
     digitalWrite(Nutrients, LOW);
