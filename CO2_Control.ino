@@ -2,13 +2,23 @@
 // Finalized code for the Co2 portion of the 
 // Greaux Engineering Section.  Includes Wifi
 // Connectivity and MQTT messaging protocol
-//
+/////////////////////////////////////////////////
+// 1. Connect to local wifi network
+// 2. Connect to Raspberry Pi MQTT server that is already on
+//    local network
+// 3. Take CO2 Reading and test accuracy
+// 4. Retake reading if reading is innacurate
+// 6. Release CO2 if accurate reading is LOW
+//    Sound buzzer if Co2 is HIGH
+//    Keep reading if CO2 is IN RANGE
+// 7. Send this data wirelessly via MQTT to Raspberry Pi
+//////////////////////////////////////////////////
 // ** DO NOT FORGET TO CHANGE NETWORK SSID AND
 //    NETWORK PASSWORD IN "WIFI VARIABLES" 
 //    SECTION **
-//
+//////////////////////////////////////////////////
 // Written by: Chase Brumfield
-/////////////////////////////////////////////////
+//////////////////////////////////////////////////
 
 #include <PubSubClient.h>        //enable MQTT Library
 #include <Wire.h>
