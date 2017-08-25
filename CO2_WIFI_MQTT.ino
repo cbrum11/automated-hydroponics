@@ -26,15 +26,15 @@ int value = 0;
 // CO2 VARIABLES ////////////////////////////
 /////////////////////////////////////////////
 float min_diff = 50;
-int CO2min = 200;       //Below which CO2 is considered LOW
-int CO2max = 800;       //Above which CO2 is considered HIGH
-int SolenoidPin = D8;
-int SensorPin = D7;
-int BuzzerPin = D5;
+int CO2min = 200;       //[PPM] Below which CO2 is considered LOW
+int CO2max = 800;       //[PPm] Above which CO2 is considered HIGH
+int SolenoidPin = D8;   //Solenoid that controls CO2 Release
+int SensorPin = D7;     //Data pin for CO2 sensor
+int BuzzerPin = D5;     //Buzzer pin to alert user if high CO2 concentration is present
 long previousMillis = 0;
-long interval = 7000; //time to keep solenoid open
+long interval = 7000; //[ms] time to keep solenoid open
 
-int diff1;    //Stores the difference between sequential readings
+int diff1;    //Stores the difference between sequential readings CO2 readings
 int diff2;
 int diff3;
 
@@ -54,7 +54,7 @@ void setup_wifi() {
   Serial.print("Connecting to ");
   Serial.println(ssid);
 
-  WiFi.persistent(false); //These 3 lines are a required work-around,
+  WiFi.persistent(false); //These 3 lines are a required bug work-around,
   WiFi.mode(WIFI_OFF);    //otherwise the module will not reconnect
   WiFi.mode(WIFI_STA);    //if it gets disconnected
   WiFi.begin(ssid, password);
@@ -138,10 +138,7 @@ int readCO2()
 
   /*
     We wait 10ms for the sensor to process our command.
-    The sensors's primary duties are to accurately
-    measure CO2 values. Waiting 10ms will ensure the
-    data is properly written to RAM
-
+    Waiting 10ms will ensure the  data is properly written to RAM
   */
 
   delay(10);
@@ -177,8 +174,8 @@ int readCO2()
   ///////////////////////
 
   /*
-    Using some bitwise manipulation we will shift our buffer
-    into an integer for general consumption
+    Bitwise manipulation to change buffer into
+    integer
   */
 
   co2_value = 0;
@@ -197,13 +194,11 @@ int readCO2()
   {
     // Failure!
     /*
-      Checksum failure can be due to a number of factors,
-      fuzzy electrons, sensor busy, etc.
+      Checksum failure.  Most likely the sensor was busy...
     */
     return 0;
   }
 }
-
 
 void setup()
 {
@@ -269,8 +264,8 @@ void loop()
 
     //////////////////////////////////////////
     //If the difference between three readings
-    //is less than what we set, we can assume
-    //reading is accurate.  If not we skip back up
+    //is less than threshold we set, we can assume
+    //reading is accurate.  If not, we skip back up
     //and take 3 more readings
     //////////////////////////////////////////
 
@@ -290,11 +285,12 @@ void loop()
       client.publish("sensor/co2/status", "CO2 Reading is ACCURATE...");
 
       ///////////////////////////////////////////////////////
-      //Once we have an accurate reading, if the
-      //CO2 level is outside our acceptable range
-      //we open the solenoid for a specified amount of time
+      //Once we have an accurate reading, We check the range.
+      //LOW --> Open solenoid for specified amount of time, send to MQTT, read again
+      //IN RANGE --> sent to MQTT, read again
+      //HIGH --> Sound buzzer, read again
       //The millis stuff keeps looping the code until
-      //we reach our set time interval
+      //we reach our set time interval.
       /////////////////////////////////////////////////////
 
       if (CO2_3 <= CO2min) {
