@@ -1,6 +1,6 @@
 /////////////////////////////////////////////
 // Finalized EC and PH code for the Greaux
-// Engineering Sysstem.  Includes wireless
+// Engineering System.  Includes wireless
 // connectivity and MQTT data transfer
 ////////////////////////////////////////////
 // DO NOT FORGET TO CHANGE MQTT IP, NETWORK SSID
