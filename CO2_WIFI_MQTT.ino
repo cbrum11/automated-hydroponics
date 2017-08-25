@@ -1,7 +1,15 @@
-/* 
-Have plans to better comment all the code below
-[4/11/2017]
-*/
+/////////////////////////////////////////////////////////////////
+// The below is used to:
+/////////////////////////////////////////////////////////////////
+// 1. Connect to local wifi network
+// 2. Connect to Raspberry Pi MQTT server that is already on
+//    local network
+// 3. Take CO2 Reading
+// 4. Release CO2 if reading is LOW
+//    Sound buzzer if Co2 is HIGH
+//    Keep reading if CO2 is IN RANGE
+// 5. Send this data wirelessly via MQTT to Raspberry Pi
+////////////////////////////////////////////////////////////////
 
 #include <Wire.h>
 #include <ESP8266WiFi.h>         //enable ESP8266 Wifi Library
