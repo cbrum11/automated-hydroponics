@@ -1,4 +1,4 @@
-#Automated Hydroponics
+# Automated Hydroponics
 
 An effort at a wireless, automated hydroponic system.
 
